@@ -10,18 +10,6 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-/*
-db.collection('operadoras').get()
-    .then(response => {
-        response.forEach(doc => {
-            console.log(doc.data());
-        });
-    })
-    .catch(err => {
-        console.log(err);
-    });
-    */
-
 contatos.forEach(contato => {
     db
         .collection('contatos')
