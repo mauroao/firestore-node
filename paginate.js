@@ -1,7 +1,6 @@
 const admin = require('firebase-admin');
 
 const serviceAccount = require('./file.json');
-const contatos = require('./contatos.mock.js'); 
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
@@ -10,11 +9,30 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-contatos.forEach(contato => {
-    db
-        .collection('contatos')
-        .doc(contato.serial)
-        .set(contato)
-        .then(ref => console.log(ref))
-        .catch(err => console.log(err));
-});
+let pageNumber = 2;
+let numberOfLines = 10; 
+
+let skipNumber = (pageNumber -1) * numberOfLines; 
+
+db.collection('contatos')
+    .orderBy('nome')
+    .limit(skipNumber)
+    .get()
+    .then(snapshot => {
+        var last = snapshot.docs[snapshot.docs.length - 1];
+    
+        db.collection('contatos')
+            .orderBy('nome')
+            .startAfter(last.data().nome)
+            .limit(numberOfLines)
+            .then(snapshot => {
+                snapshot.forEach(doc => {
+                    console.log(doc.data());
+                });                
+            })
+            .catch(err => {
+                console.log('erro:');
+                console.log(err);
+            })
+
+    });
