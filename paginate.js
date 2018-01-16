@@ -9,10 +9,54 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-let pageNumber = 2;
-let numberOfLines = 10; 
+let getPaginedContatos = async (pageNumber, numberOfLines) => {
+    let totalPages = 0;
+    let totalDocs = 0;
+    let skipNumber = (pageNumber -1) * numberOfLines;
+    
+    await db.collection('contatos')
+        .get()
+        .then(querySnapshot => {
+            totalDocs = querySnapshot.size;
+        }); 
+    
+    totalPages = Math.ceil(totalDocs / numberOfLines);
+    
+    let last = null;
+    if (skipNumber > 0) {
+        await db.collection('contatos')
+            .orderBy('nome')
+            .limit(skipNumber)
+            .then(querySnapshot => {
+                last = querySnapshot.docs[querySnapshot.docs.length - 1];
+            });
+    }
+    
+    let query = db.collection('contatos')
+        .orderBy('nome');
+    
+    if (last != null) {
+        query.startAfter(last.data().name);
+    }
+    
+    let paginationResult = {};
+    await query
+        .limit(numberOfLines)
+        .get()
+        .then(querySnapshot => {
+            let data = querySnapshot.map(doc => doc.data()); 
+            paginationResult = {
+                data: data,
+                totalPages: totalPages,
+                pageNumber: pageNumber
+            };
+        });
+    
+    
+    return paginationResult;
+   
 
-let skipNumber = (pageNumber -1) * numberOfLines; 
+}
 
 db.collection('contatos')
     .orderBy('nome')
